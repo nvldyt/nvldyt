@@ -100,9 +100,8 @@
             window.history.pushState({}, '', '?room=general'); 
         }
 
-        // Yêu cầu nhập Nickname khi mới vào
-        let nickname = prompt("Nhập Nickname của bạn để vào phòng:");
-        if (!nickname) { nickname = "Anonymous_" + Math.floor(Math.random() * 1000); }
+        // Tự động tạo Nickname ngẫu nhiên, bỏ qua bước hỏi
+        let nickname = "Anonymous_" + Math.floor(Math.random() * 10000);
 
         const chatWindow = document.getElementById('chat-window');
         const chatInput = document.getElementById('chat-input');
