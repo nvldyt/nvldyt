@@ -1,1 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hack.chat Clone</title>
+    <style>
+        /* Nền tối, chữ Monospace chuẩn Terminal */
+        body, html {
+            margin: 0; padding: 0;
+            background-color: #0f1011; /* Đen tuyền */
+            color: #cccccc;
+            font-family: 'Consolas', 'Courier New', monospace;
+            height: 100%; display: flex; flex-direction: column;
+        }
 
+        /* Khu vực hiển thị tin nhắn */
+        #chat-window {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Tùy biến các loại tin nhắn */
+        .msg-line { margin-bottom: 6px; font-size: 15px; line-height: 1.5; word-wrap: break-word; }
+        .sys-msg { color: #4af626; } /* Xanh lá */
+        .user-name { color: #2e8ded; margin-right: 12px; display: inline-block; min-width: 60px; text-align: right; } /* Xanh dương */
+        
+        /* Khu vực nhập liệu dưới đáy */
+        #input-area {
+            display: flex;
+            padding: 10px 20px;
+            border-top: 1px solid #333;
+        }
+        #chat-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 15px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chat-window"></div>
+    
+    <div id="input-area">
+        <input type="text" id="chat-input" placeholder="Type here and press Enter..." autocomplete="off">
+    </div>
+
+    <script>
+        // Lấy tên phòng từ URL, VD: localhost:8000/?room=123 (Mặc định là 'general')
+        const urlParams = new URLSearchParams(window.location.search);
+        let room = urlParams.get('room');
+        if (!room) {
+            room = 'general';
+            window.history.pushState({}, '', '?room=general'); // Đổi URL trên thanh địa chỉ
+        }
+
+        // Yêu cầu nhập Nickname khi mới vào
+        let nickname = prompt("Enter your nickname:");
+        if (!nickname) { nickname = "Anonymous_" + Math.floor(Math.random() * 1000); }
+
+        const chatWindow = document.getElementById('chat-window');
+        const chatInput = document.getElementById('chat-input');
+
+        // Hiển thị tin nhắn thông báo ban đầu
+        appendMessage('sys', `* You are in room: ?room=${room}`);
+
+        // KẾT NỐI WEBSOCKET ĐẾN MÁY CHỦ FASTAPI
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const wsUrl = `${protocol}://${window.location.host}/ws/${room}/${nickname}`;
+        const ws = new WebSocket(wsUrl);
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'sys') {
+                appendMessage('sys', data.text);
+            } else {
+                appendMessage('chat', data.text, data.user);
+            }
+        };
+
+        // Gửi tin nhắn khi bấm Enter
+        chatInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter" && chatInput.value.trim() !== "") {
+                ws.send(chatInput.value.trim());
+                chatInput.value = "";
+            }
+        });
+
+        // Hàm nối thêm tin nhắn vào màn hình
+        function appendMessage(type, text, user="") {
+            const div = document.createElement('div');
+            div.className = 'msg-line';
+            
+            if (type === 'sys') {
+                div.className += ' sys-msg';
+                div.textContent = text;
+            } else {
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'user-name';
+                nameSpan.textContent = user;
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = text;
+                
+                div.appendChild(nameSpan);
+                div.appendChild(textSpan);
+            }
+            
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // Tự cuộn xuống đáy
+        }
+    </script>
+</body>
+</html>
