@@ -1,2 +1,2 @@
-streamlit
-cryptography
+fastapi
+uvicorn[standard]
