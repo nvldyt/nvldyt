@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer"><title>Private Ephemeral Chat</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif}*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#e5e7eb;min-height:100vh;display:grid;place-items:center;padding:18px}
+main{width:min(720px,100%);background:#111827;border:1px solid #334155;border-radius:18px;padding:22px}
+h1{margin:0 0 6px;font-size:24px}.muted{color:#94a3b8;font-size:14px;line-height:1.55}
+label{display:block;margin:14px 0 6px;font-size:14px;color:#cbd5e1}
+input,textarea,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #475569;background:#0f172a;color:#f8fafc;width:100%}
+button{background:#0f766e;border:0;font-weight:700;cursor:pointer;margin-top:10px}button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px}.row button{width:auto;white-space:nowrap}
+#messages{height:300px;overflow:auto;background:#080d18;border:1px solid #334155;border-radius:12px;padding:12px;margin:16px 0}
+.msg{padding:8px 10px;border-radius:10px;background:#1e293b;margin:8px 0;overflow-wrap:anywhere}
+.notice{padding:10px;background:#422006;border:1px solid #92400e;border-radius:10px;color:#fde68a;margin:14px 0}
+.hidden{display:none!important}.small{font-size:12px}.ok{color:#86efac}
+</style></head>
+<body><main>
+<h1>Chat riêng tư tạm thời</h1>
+<p class="muted">Mã hóa AES‑GCM ngay trên trình duyệt. Máy chủ chỉ chuyển tiếp bản mã, không lưu lịch sử. Phù hợp trao đổi ngắn giữa tối đa 2 người.</p>
+<div class="notice">Lưu ý: Chỉ chia sẻ mã phòng qua một kênh đáng tin cậy. Không dùng để trao đổi thông tin có rủi ro cao trước khi kiểm thử và đánh giá bảo mật độc lập.</div>
+<section id="setup">
+<label for="code">Mã phòng + bí mật (người nhận dán mã được chia sẻ)</label>
+<input id="code" autocomplete="off" placeholder="Để trống nếu tạo phòng mới">
+<button id="create">Tạo phòng mới</button><button id="join" class="hidden">Tham gia phòng</button>
+<p id="share" class="muted"></p>
+</section>
+<section id="chat" class="hidden">
+<p class="ok" id="status">Đã kết nối an toàn.</p>
+<div id="messages" aria-live="polite"></div>
+<div class="row"><input id="message" maxlength="3000" placeholder="Tin nhắn (tối đa 3.000 ký tự)" autocomplete="off"><button id="send">Gửi</button></div>
+<button id="leave" style="background:#7f1d1d">Rời phòng và xóa phiên</button>
+</section>
+<p class="muted small">Không lưu tin nhắn vào cơ sở dữ liệu/localStorage. Khi cả hai rời phòng hoặc máy chủ khởi động lại, phiên phòng bị hủy.</p>
+</main>
+<script src="/static/client.js" defer></script>
+</body></html>
