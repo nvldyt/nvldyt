@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat Bí Mật</title>
     <style>
-        /* Nền tối, chữ Monospace để giữ chất Hacker */
         body, html {
             margin: 0; padding: 0;
             background-color: #0b0c10;
@@ -13,20 +12,14 @@
             font-family: 'Consolas', 'Courier New', monospace;
             height: 100%; display: flex; flex-direction: column;
         }
-
-        /* Khu vực hiển thị tin nhắn */
         #chat-window {
             flex-grow: 1; padding: 20px; overflow-y: auto;
             display: flex; flex-direction: column; gap: 14px;
         }
-
-        /* Container cho mỗi dòng tin nhắn (Trái / Phải / Giữa) */
         .msg-row { display: flex; width: 100%; }
         .msg-row.me { justify-content: flex-end; }
         .msg-row.other { justify-content: flex-start; }
-        .msg-row.sys { justify-content: center; margin: 10px 0;}
-
-        /* Bong bóng tin nhắn (Chia trái/phải rõ ràng) */
+        .msg-row.sys { justify-content: center; margin: 10px 0; }
         .msg-bubble {
             max-width: 75%;
             padding: 10px 16px;
@@ -36,30 +29,25 @@
             line-height: 1.5;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        /* Tin nhắn của MÌNH (Bên phải) */
         .msg-bubble.me {
-            background-color: #1f2937; 
+            background-color: #1f2937;
             border: 1px solid #4b5563;
-            border-bottom-right-radius: 2px; /* Vát mép Zalo */
+            border-bottom-right-radius: 2px;
         }
-        /* Tin nhắn của NGƯỜI KHÁC (Bên trái) */
         .msg-bubble.other {
             background-color: #111827;
             border: 1px solid #374151;
             border-bottom-left-radius: 2px;
         }
-
-        /* Tên người dùng */
         .user-name { font-size: 12px; margin-bottom: 5px; font-weight: bold; }
-        .msg-bubble.me .user-name { color: #66fcf1; text-align: right; } /* Màu Cyan sáng */
-        .msg-bubble.other .user-name { color: #4af626; text-align: left; } /* Xanh lá Hacker */
-        
+        .msg-bubble.me .user-name { color: #66fcf1; text-align: right; }
+        .msg-bubble.other .user-name { color: #4af626; text-align: left; }
         .msg-text { white-space: pre-wrap; }
-
-        /* Thông báo hệ thống (Tham gia/Thoát) */
-        .sys-msg { color: #f2a900; font-style: italic; font-size: 14px; text-align: center; background: rgba(242, 169, 0, 0.1); padding: 4px 12px; border-radius: 20px;}
-
-        /* KHU VỰC NHẬP LIỆU & NÚT GỬI (DƯỚI ĐÁY) */
+        .sys-msg {
+            color: #f2a900; font-style: italic; font-size: 14px;
+            text-align: center; background: rgba(242, 169, 0, 0.1);
+            padding: 4px 12px; border-radius: 20px;
+        }
         #input-area {
             display: flex; padding: 14px 20px;
             background-color: #1f2937;
@@ -71,46 +59,39 @@
             color: #c5c6c7; font-family: inherit; font-size: 16px;
             padding: 12px 16px; border-radius: 10px; outline: none;
         }
-        #chat-input:focus { border-color: #66fcf1; box-shadow: 0 0 0 1px #66fcf1;}
-        
+        #chat-input:focus { border-color: #66fcf1; box-shadow: 0 0 0 1px #66fcf1; }
         #send-btn {
             background-color: #45a29e; color: #0b0c10;
             border: none; border-radius: 10px; padding: 0 24px;
             font-family: inherit; font-size: 16px; font-weight: bold;
             cursor: pointer; transition: 0.2s;
         }
-        #send-btn:hover { background-color: #66fcf1; transform: translateY(-2px);}
+        #send-btn:hover { background-color: #66fcf1; transform: translateY(-2px); }
     </style>
 </head>
 <body>
-
     <div id="chat-window"></div>
-    
     <div id="input-area">
         <input type="text" id="chat-input" placeholder="Nhập tin nhắn của bạn..." autocomplete="off">
         <button id="send-btn">GỬI</button>
     </div>
 
     <script>
-        // Lấy tên phòng từ URL
         const urlParams = new URLSearchParams(window.location.search);
         let room = urlParams.get('room');
         if (!room) {
             room = 'general';
-            window.history.pushState({}, '', '?room=general'); 
+            window.history.pushState({}, '', '?room=general');
         }
 
-        // Tự động tạo Nickname ngẫu nhiên, bỏ qua bước hỏi
         let nickname = "Anonymous_" + Math.floor(Math.random() * 10000);
 
         const chatWindow = document.getElementById('chat-window');
         const chatInput = document.getElementById('chat-input');
         const sendBtn = document.getElementById('send-btn');
 
-        // Hiển thị thông báo vào phòng
         appendMessage('sys', `* Bạn đã vào phòng chat bí mật: [ ${room} ]`);
 
-        // KẾT NỐI WEBSOCKET
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
         const wsUrl = `${protocol}://${window.location.host}/ws/${room}/${nickname}`;
         const ws = new WebSocket(wsUrl);
@@ -124,31 +105,30 @@
             }
         };
 
-        // Hàm Gửi tin nhắn
+        ws.onerror = function() {
+            appendMessage('sys', '* Lỗi kết nối tới máy chủ WebSocket!');
+        };
+
         function sendMessage() {
             const text = chatInput.value.trim();
-            if (text !== "") {
+            if (text !== "" && ws.readyState === WebSocket.OPEN) {
                 ws.send(text);
                 chatInput.value = "";
-                chatInput.focus(); // Giữ con trỏ chuột ở ô nhập sau khi gửi
+                chatInput.focus();
             }
         }
 
-        // Bấm nút GỬI bằng chuột
         sendBtn.addEventListener("click", sendMessage);
-
-        // Bấm phím Enter
-        chatInput.addEventListener("keypress", function(event) {
+        chatInput.addEventListener("keydown", function(event) {
             if (event.key === "Enter") {
                 sendMessage();
             }
         });
 
-        // Hàm phân loại và in tin nhắn ra màn hình (Trái / Phải)
         function appendMessage(type, text, user="") {
             const row = document.createElement('div');
             row.className = 'msg-row';
-            
+
             if (type === 'sys') {
                 row.classList.add('sys');
                 const sysDiv = document.createElement('div');
@@ -158,8 +138,7 @@
             } else {
                 const bubble = document.createElement('div');
                 bubble.className = 'msg-bubble';
-                
-                // So sánh tên để đẩy sang trái hay phải
+
                 if (user === nickname) {
                     row.classList.add('me');
                     bubble.classList.add('me');
@@ -167,22 +146,22 @@
                     row.classList.add('other');
                     bubble.classList.add('other');
                 }
-                
+
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'user-name';
                 nameDiv.textContent = user;
-                
+
                 const textDiv = document.createElement('div');
                 textDiv.className = 'msg-text';
                 textDiv.textContent = text;
-                
+
                 bubble.appendChild(nameDiv);
                 bubble.appendChild(textDiv);
                 row.appendChild(bubble);
             }
-            
+
             chatWindow.appendChild(row);
-            chatWindow.scrollTop = chatWindow.scrollHeight; // Tự cuộn xuống đáy
+            chatWindow.scrollTop = chatWindow.scrollHeight;
         }
     </script>
 </body>
